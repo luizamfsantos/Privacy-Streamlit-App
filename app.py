@@ -1,35 +1,49 @@
 import streamlit as st
 import pandas as pd
 import io
+from openpyxl import load_workbook
 
-def get_table_download_link(df):
+def get_table_download_link(dfs):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False)
+        for sheet_name, df in dfs.items():
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
     output.seek(0)
     return output
 
 st.title('Ocultar Identidade')
 
-uploaded_file = st.file_uploader('Insira seus arquivos excel', type=['xlsx', 'xls'])
+uploaded_files = st.file_uploader('Insira seus arquivos excel', type=['xlsx', 'xls'], accept_multiple_files=True)
 
-if uploaded_file is not None:
-    df = pd.read_excel(uploaded_file)
-    df = df.astype(str)
+if uploaded_files:
+    all_dfs = {}
+    for uploaded_file in uploaded_files:
+        xls = pd.ExcelFile(uploaded_file)
+        for sheet_name in xls.sheet_names:
+            df = pd.read_excel(xls, sheet_name=sheet_name)
+            df = df.astype(str)
+            all_dfs[f"{uploaded_file.name} - {sheet_name}"] = df
+
     # Create tabs
     tab1, tab2 = st.tabs(["Dados Ocultos", "Dados Originais"])
     
-    # Tab 1: Display the dataframe for editing (can hide sensitive data before this step)
+    # Tab 1: Display the dataframes for editing
     with tab1:
         st.write('Clique nas celulas para editar manualmente')
-        edited_df = st.data_editor(df, num_rows='dynamic')
+        edited_dfs = {}
+        for sheet_name, df in all_dfs.items():
+            st.subheader(sheet_name)
+            edited_df = st.data_editor(df, num_rows='dynamic')
+            edited_dfs[sheet_name] = edited_df
 
-    # Tab 2: Display the original dataframe
+    # Tab 2: Display the original dataframes
     with tab2:
         st.write('Dados Originais')
-        st.dataframe(df)
+        for sheet_name, df in all_dfs.items():
+            st.subheader(sheet_name)
+            st.dataframe(df)
     
-    final_output = get_table_download_link(edited_df)
+    final_output = get_table_download_link(edited_dfs)
         
     st.download_button(
         label="Baixar o arquivo com os dados ocultos",
