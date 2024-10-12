@@ -1,3 +1,4 @@
-setuptools==75.1.0
-wheel==0.44.0
-xlrd==2.0.1
+streamlit==1.38.0
+pandas==2.2.2
+pyarrow==14.0.1
+openpyxl==3.1.5
