@@ -13,8 +13,6 @@ def get_table_download_link(dfs):
     output.seek(0)
     return output
 
-from datetime import datetime
-
 def is_date(string):
     date_patterns = [
         '%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%Y/%m/%d', '%d/%m/%y', '%y-%m-%d', 
@@ -60,7 +58,6 @@ if uploaded_files:
             df = pd.read_excel(xls, sheet_name=sheet_name)
             df = df.astype(str)
             df = df.replace('nan', '')
-            df = hide_identity(df)
             all_dfs[f"{uploaded_file.name} - {sheet_name}"] = df
 
     # Create tabs
@@ -72,7 +69,8 @@ if uploaded_files:
         edited_dfs = {}
         for sheet_name, df in all_dfs.items():
             st.subheader(sheet_name)
-            edited_df = st.data_editor(df, num_rows='dynamic')
+            edited_df = hide_identity(df)
+            edited_df = st.data_editor(edited_df, num_rows='dynamic')
             edited_dfs[sheet_name] = edited_df
 
     # Tab 2: Display the original dataframes
